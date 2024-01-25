@@ -1,8 +1,14 @@
 import openai
+from dotenv import load_dotenv
 import os
+
+
+# Load environment variables from .env
+load_dotenv()
 
 # Set your OpenAI API key
 openai.api_key = os.environ.get('CORTANA_INDEX')
+print("API Key:", openai.api_key)
 
 class CortanaAssistant:
     def __init__(self):
