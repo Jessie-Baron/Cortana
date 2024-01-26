@@ -1,9 +1,9 @@
 import openai
 from dotenv import load_dotenv
 import speech_recognition as sr
-from gtts import gTTS
+import requests
 import os
-
+import platform
 
 # Load environment variables from .env
 load_dotenv()
@@ -94,36 +94,46 @@ class CortanaKnowledgeBase:
             print(f"Error connecting to Google API: {e}")
             return None
 
-    def speak_text(self, response):
-        if isinstance(response, dict):
-            # Extract relevant information from the dictionary
-            name = response.get("name", "Cortana")
-            personality_traits = ", ".join(response.get("personality_traits", []))
-            background = response.get("background", "Information not available.")
+    def synthesize_audio(self, text):
+        url = "https://api.elevenlabs.io/v1/text-to-speech/SLPZrQfiDYD7GygGgA2c"
+        headers = {
+            "Accept": "audio/mpeg",
+            "Content-Type": "application/json",
+            "xi-api-key": os.environ.get('CORTANA_VOICE')
+        }
+        data = {
+            "text": text,
+            "model_id": "eleven_monolingual_v1",
+            "voice_settings": {
+                "stability": 0.5,
+                "similarity_boost": 0.5
+            }
+        }
 
-            # Generate a response string
-            response_text = f"I am {name}, an AI with the following traits: {personality_traits}. {background}"
-        else:
-            response_text = response
+        response = requests.post(url, json=data, headers=headers)
 
-        # Use gTTS to convert the response text into speech
-        tts = gTTS(text=response_text, lang='en')
-        tts.save("cortana_response.mp3")
+        # Save the synthesized audio to a file
+        with open("cortana_response.mp3", "wb") as f:
+            for chunk in response.iter_content(chunk_size=1024):
+                if chunk:
+                    f.write(chunk)
 
-        # Use the 'open' command to play the MP3 file on macOS
+        # Play the synthesized audio
         try:
-            os.system("open cortana_response.mp3")
+            if platform.system() == "Darwin":  # macOS
+                os.system("open cortana_response.mp3")
+            elif platform.system() == "Windows":
+                os.system("start cortana_response.mp3")
+            elif platform.system() == "Linux":
+                os.system("xdg-open cortana_response.mp3")
         except Exception as e:
             print(f"Error playing audio: {e}")
-
-    def interact_with_speech(self):
-        user_input = self.recognize_speech()
-        if user_input:
-            response = self.interact(user_input)
-            self.speak_text(response)
 
 # Example usage
 cortana_kb = CortanaKnowledgeBase()
 
 while True:
-    cortana_kb.interact_with_speech()
+    user_input = cortana_kb.recognize_speech()
+    if user_input:
+        response = cortana_kb.interact(user_input)
+        cortana_kb.synthesize_audio(response)
