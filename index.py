@@ -44,6 +44,9 @@ class CortanaKnowledgeBase:
         if "how are you" in user_input.lower():
             return "I'm an AI, so I don't experience emotions, but thanks for asking."
 
+        elif "what is your purpose" in user_input.lower():
+            return "I am an aartificial intelligence construct. I was one of the most important figures in the Human-Covenant war, and was John-117's partner in various combat missions as well as serving as the AI for the Halcyon-class light cruiser - UNSC Pillar of Autumn, Orbital Defense Platform - Cairo Station Charon-class light frigate - UNSC Forward Unto Dawn, and Stalwart-class light frigate UNSC In Amber Clad. In addition, I hold vital data pertaining to the Halos, including the Activation Index from Installation 04. Now I am just your personal AI assistant!"
+
         # Add more custom response patterns as needed
 
         # If no specific pattern matches, use GPT-3 for general conversation
@@ -109,31 +112,29 @@ class CortanaKnowledgeBase:
         }
         data = {
             "text": text,
-            "model_id": "eleven_monolingual_v1",
-            "voice_settings": {
-                "stability": 0.5,
-                "similarity_boost": 0.5
-            }
+            "model_id": "eleven_multilingual_v2",
         }
 
         response = requests.post(url, json=data, headers=headers)
 
-        # Save the synthesized audio to a file
-        with open("cortana_response.mp3", "wb") as f:
-            for chunk in response.iter_content(chunk_size=1024):
-                if chunk:
-                    f.write(chunk)
+        # Check if the request was successful
+        if response.status_code == 200:
+            # Save the synthesized audio to a file
+            with open("cortana_response.mp3", "wb") as f:
+                f.write(response.content)
 
-        # Play the synthesized audio
-        try:
-            if platform.system() == "Darwin":  # macOS
-                os.system("open cortana_response.mp3")
-            elif platform.system() == "Windows":
-                os.system("start cortana_response.mp3")
-            elif platform.system() == "Linux":
-                os.system("xdg-open cortana_response.mp3")
-        except Exception as e:
-            print(f"Error playing audio: {e}")
+            # Play the synthesized audio
+            try:
+                if platform.system() == "Darwin":  # macOS
+                    os.system("afplay cortana_response.mp3")
+                elif platform.system() == "Windows":
+                    os.system("start cortana_response.mp3")
+                elif platform.system() == "Linux":
+                    os.system("xdg-open cortana_response.mp3")
+            except Exception as e:
+                print(f"Error playing audio: {e}")
+        else:
+            print(f"Error: {response.status_code} - {response.text}")
 
 
 class CortanaGUI(QWidget):
