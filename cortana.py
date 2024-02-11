@@ -87,7 +87,7 @@ class CortanaKnowledgeBase:
         service = build('gmail', 'v1', credentials=creds)
 
         # Get the list of messages
-        messages = service.users().messages().list(userId='me', labelIds=['INBOX']).execute()
+        messages = service.users().messages().list(userId='me', labelIds=['INBOX', 'CATEGORY_PERSONAL']).execute()
         if 'messages' in messages:
             latest_message_id = messages['messages'][0]['id']
             message = service.users().messages().get(userId='me', id=latest_message_id).execute()
